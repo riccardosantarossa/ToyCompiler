@@ -51,7 +51,7 @@ class Instruction():
                 numArg = int(el)
                 parsedInstruction.instructionArguments.append(numArg)
             except ValueError:
-                if el in self.glossary.nAryMathF or el in self.glossary.stringsF:
+                if el in self.glossary.nAryMathF or el in self.glossary.stringsF or el in self.glossary.basicMathF:
                     parsedInstruction.instructionFunctions.append(el)
                 else:
                     parsedInstruction.instructionArguments.append(el)
@@ -142,8 +142,21 @@ def executeInstruction(ctx):
     elif func in ctx.glossary.nAryMathF:
         executeN_AryMathFunction(ctx, func)
     elif func in ctx.glossary.stringsF:
-        start = 0
-        end = 1
+        #parsing delle funzioni del tipo 
+        #s1 s2 ... sN startIndex endIndex (s1..sN stringhe da modificare)
+        start, end , wordNumber= 0, 1, 0
+        for i in range(0, len(ctx.currentStack)):
+            try:
+                idx = int(ctx.currentStack[i])
+                if wordNumber == 0:
+                    wordNumber = i 
+                if isinstance(ctx.currentStack[i-1], str):
+                    start = idx
+                else:
+                    end = idx
+            except ValueError:
+                pass
+        ctx.currentStack = ctx.currentStack[0:wordNumber]
         executeStringFunction(ctx, func, start, end)
         
     return ctx
@@ -238,7 +251,7 @@ def capitalizeString(ctx, start, end):
         str = ctx.currentStack.pop()
         splittedStr = list(str)
         for i in range(0, len(splittedStr)):
-            if i in range(start, end):
+            if i in range(start, end + 1):
                 splittedStr[i] = splittedStr[i].upper()
         
         #salvo in memoria il risultato
