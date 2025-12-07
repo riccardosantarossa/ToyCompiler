@@ -46,7 +46,6 @@ class Instruction():
         #popola i vari campi dell'oggetto controllando se sono
         #numeri interi, stringhe o nomi di funzioni
         for el in splittedInstruction:
-            
             try:
                 numArg = int(el)
                 parsedInstruction.instructionArguments.append(numArg)
@@ -144,20 +143,9 @@ def executeInstruction(ctx):
     elif func in ctx.glossary.stringsF:
         #parsing delle funzioni del tipo 
         #s1 s2 ... sN startIndex endIndex (s1..sN stringhe da modificare)
-        start, end , wordNumber= 0, 1, 0
-        for i in range(0, len(ctx.currentStack)):
-            try:
-                idx = int(ctx.currentStack[i])
-                if wordNumber == 0:
-                    wordNumber = i 
-                if isinstance(ctx.currentStack[i-1], str):
-                    start = idx
-                else:
-                    end = idx
-            except ValueError:
-                pass
-        ctx.currentStack = ctx.currentStack[0:wordNumber]
-        executeStringFunction(ctx, func, start, end)
+        functionParams = extractIndexes(ctx)
+        ctx.currentStack = ctx.currentStack[0:functionParams[2]]
+        executeStringFunction(ctx, func, functionParams[0], functionParams[1])
         
     return ctx
 
@@ -195,7 +183,7 @@ def executeBasicMathFunction(ctx, func):
 #return contesto aggiornato 
 def executeN_AryMathFunction(ctx, func):
     
-    #implementazione di alcune funzioni con case match
+    #implementazione di funzioni con case match
     match func:
         #funzione duplicazione
         case 'dup':
@@ -229,21 +217,22 @@ def executeN_AryMathFunction(ctx, func):
 #return contesto aggiornato 
 def executeStringFunction(ctx, func, start = 0, end = 1):
     
-    #funzione capitalize (standard e generalizzata)
     match func:
+        #funzione capitalize (anche generalizzata)
         case 'capitalize':
-            for str in ctx.currentStack:
-                capitalizeString(ctx, start, end)
+                capitalizeStrings(ctx, start, end)
+        #slicing applicando il substring 
+        case 'slice':
+                sliceStrings(ctx, start, end)            
+        
 
-
-
-#funzione che rende maiuscole le lettere di una stringa 
+#funzione che rende maiuscole le lettere delle stringhe nello stack
 #in un determinato intervallo numerico
 #@param ctx -> contesto di esecuzione
 #@param start -> indice di partenza 
 #@param end -> indice di fine
 #return contesto aggiornato
-def capitalizeString(ctx, start, end):
+def capitalizeStrings(ctx, start, end):
     
     #applico il capitalize a tutte le stringhe
     #presenti nello stack in quel momento
@@ -260,7 +249,44 @@ def capitalizeString(ctx, start, end):
         ctx.memory.append(str)
     
     return ctx
+
+
+#funzione che estrae la sottostringa di lunghezza (end - start)
+#a partire dall'indice start a tutte le strnghe presenti nello stack
+#@param ctx -> contesto di applicazione della funzione
+#param start -> indice di partenza del substring
+#param end -> indice di fine del substring
+#@return contesto aggiornato
+def sliceStrings(ctx, start = 0, end = 1):
+    while ctx.currentStack:
+      str = ctx.currentStack.pop()
+      slicedString = [str[i] for i in range(start,end + 1)]
+      str = ''.join(slicedString)
+      ctx.memory.append(str)
+      
+    return ctx
+
+
+#funzione ausiliaria per estrarre gli indici di partenza e arrivo
+#per l'utilizzo di procedure su stringhe e/o liste
+#@param ctx -> contesto di utilizzo della funzione
+#@return lista contenente i due indici da passare alle procedure successive
+#        e il numero di stringhe su cui applicare le procedure successive
+def extractIndexes(ctx):
+    start, end , wordNumber= 0, 1, 0
+    for i in range(0, len(ctx.currentStack)):
+        try:
+            idx = int(ctx.currentStack[i])
+            if wordNumber == 0:
+                wordNumber = i 
+            if isinstance(ctx.currentStack[i-1], str):
+                start = idx
+            else:
+                end = idx
+        except ValueError:
+            pass
         
+    return [start, end, wordNumber]
 
 #----------------------MAIN---------------------------------------#
 
