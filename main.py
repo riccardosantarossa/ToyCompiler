@@ -223,7 +223,9 @@ def executeStringFunction(ctx, func, start = 0, end = 1):
                 capitalizeStrings(ctx, start, end)
         #slicing applicando il substring 
         case 'slice':
-                sliceStrings(ctx, start, end)            
+                sliceStrings(ctx, start, end)
+        case 'reverse':
+                reverseString(ctx)            
         
 
 #funzione che rende maiuscole le lettere delle stringhe nello stack
@@ -240,7 +242,7 @@ def capitalizeStrings(ctx, start, end):
         str = ctx.currentStack.pop()
         splittedStr = list(str)
         for i in range(0, len(splittedStr)):
-            if i in range(start, end + 1):
+            if i in range(start, end):
                 splittedStr[i] = splittedStr[i].upper()
         
         #salvo in memoria il risultato
@@ -267,6 +269,20 @@ def sliceStrings(ctx, start = 0, end = 1):
     return ctx
 
 
+#funzione che applica il reverse alle stringhe presenti nello stack
+#@param ctx -> contesto di applicazione della funzione
+#@return contesto aggiornato 
+def reverseString(ctx):
+    while ctx.currentStack:
+        str = ctx.currentStack.pop()
+        reversedString = [str[i] for i in range(len(str) - 1, -1, -1)]    
+        reversedString.append(' ')
+        str = ''.join(reversedString)
+        ctx.memory.append(str)
+        
+    return ctx
+
+
 #funzione ausiliaria per estrarre gli indici di partenza e arrivo
 #per l'utilizzo di procedure su stringhe e/o liste
 #@param ctx -> contesto di utilizzo della funzione
@@ -277,13 +293,12 @@ def extractIndexes(ctx):
     for i in range(0, len(ctx.currentStack)):
         try:
             idx = int(ctx.currentStack[i])
-            if wordNumber == 0:
-                wordNumber = i 
             if isinstance(ctx.currentStack[i-1], str):
                 start = idx
             else:
                 end = idx
         except ValueError:
+            wordNumber += 1
             pass
         
     return [start, end, wordNumber]
